@@ -8,6 +8,7 @@ import { FOODS } from "@/lib/data/foods";
 import { getStageFromBirthDate } from "@/lib/utils/babyAge";
 import { useBabyStore } from "@/store/useBabyStore";
 import { useFoodStore } from "@/store/useFoodStore";
+import clsx from "clsx";
 import { useState } from "react";
 
 // ─── Demo plan data (placeholder until AI generation) ───────────────────────
@@ -52,13 +53,18 @@ const DEMO_PLAN: DayPlan[] = [
   },
 ];
 
+const DAYS = ["月", "火", "水", "木", "金", "土", "日"] as const;
 const MEAL_LABELS = ["朝ごはん", "昼ごはん", "夜ごはん"];
 const MEAL_KEYS: (keyof DayPlan)[] = ["breakfast", "lunch", "dinner"];
+const MEAL_SHORT = ["朝", "昼", "夜"] as const;
+
+type ViewMode = "day" | "week";
 
 export function PlanPage() {
   const [selectedDay, setSelectedDay] = useState(0);
   const [plan, setPlan] = useState<DayPlan[]>(DEMO_PLAN);
   const [generated, setGenerated] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("day");
 
   const { statuses } = useFoodStore();
   const { profile } = useBabyStore();
@@ -73,7 +79,6 @@ export function PlanPage() {
   const handleGenerate = async () => {
     // TODO 本番移行時: Claude API (claude-3-5-haiku-latest) を呼び出す
     await new Promise((r) => setTimeout(r, 2000));
-    // Shuffle demo plan to simulate regeneration
     const shuffled = [...DEMO_PLAN].sort(() => Math.random() - 0.5);
     setPlan(shuffled);
     setGenerated(true);
@@ -85,68 +90,154 @@ export function PlanPage() {
     <div>
       <PageHeader subtitle="週間メニュー" title="こんしゅうの献立" />
 
-      <DaySelector
-        selected={selectedDay}
-        onSelect={setSelectedDay}
-        todayIdx={0}
-      />
+      {/* ─── 表示切替タブ ────────────────────────────────────────────────────── */}
+      <div className="flex gap-1 px-4 pb-1 pt-2">
+        {(["day", "week"] as ViewMode[]).map((mode) => (
+          <button
+            key={mode}
+            onClick={() => setViewMode(mode)}
+            className={clsx(
+              "rounded-xl px-4 py-1.5 text-xs font-semibold transition-colors",
+              viewMode === mode
+                ? "bg-brand-light text-white"
+                : "bg-gray-100 text-gray-500",
+            )}
+          >
+            {mode === "day" ? "日別" : "週間一覧"}
+          </button>
+        ))}
+      </div>
 
-      {/* Untried badge */}
+      {/* ─── 未試食バナー ────────────────────────────────────────────────────── */}
       {untriedFoods.length > 0 && (
-        <div className="mx-4 mb-1 mt-1 flex items-center gap-2 rounded-xl border border-yellow-100 bg-yellow-50 px-3 py-2">
+        <div className="mx-4 mb-1 mt-2 flex items-center gap-2 rounded-xl border border-yellow-100 bg-yellow-50 px-3 py-2">
           <span className="text-sm">💡</span>
           <p className="text-xs text-yellow-700">
-            未試食の食材が <strong>{untriedFoods.length}種類</strong> あります。
-            献立生成で取り入れてみましょう！
+            未試食の食材が <strong>{untriedFoods.length}種類</strong>{" "}
+            あります。献立生成で取り入れてみましょう！
           </p>
         </div>
       )}
 
       <AIGenerateButton onGenerate={handleGenerate} generated={generated} />
 
-      {/* Day plan detail */}
-      <div className="space-y-3 px-4 py-4">
-        {MEAL_KEYS.map((key, i) => {
-          const meal = dayPlan[key];
-          if (!meal) return null;
-          return (
-            <Card key={key} className="p-4">
-              <div className="mb-2 flex items-start justify-between gap-2">
-                <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
-                  {MEAL_LABELS[i]}
-                </p>
-                <button className="text-[10px] font-medium text-brand-light">
-                  編集
-                </button>
-              </div>
-              <div className="flex flex-wrap items-baseline gap-2">
-                <span className="text-sm font-bold text-gray-800">
-                  {meal.main}
-                </span>
-                <span className="text-xs text-gray-200">＋</span>
-                {meal.sides.map((s, j) => (
+      {viewMode === "day" ? (
+        /* ─── 日別ビュー ──────────────────────────────────────────────────── */
+        <>
+          <DaySelector
+            selected={selectedDay}
+            onSelect={setSelectedDay}
+            todayIdx={0}
+          />
+
+          <div className="space-y-3 px-4 py-2">
+            {MEAL_KEYS.map((key, i) => {
+              const meal = dayPlan[key];
+              if (!meal) return null;
+              return (
+                <Card key={key} className="p-4">
+                  <div className="mb-2 flex items-start justify-between gap-2">
+                    <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                      {MEAL_LABELS[i]}
+                    </p>
+                    <button className="text-[10px] font-medium text-brand-light">
+                      編集
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <span className="text-sm font-bold text-gray-800">
+                      {meal.main}
+                    </span>
+                    <span className="text-xs text-gray-200">＋</span>
+                    {meal.sides.map((s, j) => (
+                      <span
+                        key={j}
+                        className="rounded-full bg-brand-bg px-2 py-0.5 text-xs font-medium text-brand-dark"
+                      >
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </Card>
+              );
+            })}
+
+            <div className="pt-2 text-center">
+              <button className="rounded-xl border border-dashed border-gray-200 px-4 py-2 text-xs text-gray-300">
+                + メモを追加する
+              </button>
+            </div>
+          </div>
+        </>
+      ) : (
+        /* ─── 週間一覧ビュー ──────────────────────────────────────────────── */
+        <div className="space-y-2 px-4 py-3">
+          {plan.map((dayPlanItem, i) => (
+            <Card
+              key={i}
+              className="overflow-hidden"
+              onClick={() => {
+                setSelectedDay(i);
+                setViewMode("day");
+              }}
+            >
+              <div className="flex items-stretch">
+                {/* 曜日ラベル */}
+                <div
+                  className={clsx(
+                    "flex w-12 shrink-0 flex-col items-center justify-center gap-0.5 py-3",
+                    i === 0 ? "bg-brand-pale" : "bg-gray-50",
+                  )}
+                >
                   <span
-                    key={j}
-                    className="rounded-full bg-brand-bg px-2 py-0.5 text-xs font-medium text-brand-dark"
+                    className={clsx(
+                      "text-sm font-bold",
+                      i === 0 ? "text-brand-dark" : "text-gray-600",
+                    )}
                   >
-                    {s}
+                    {DAYS[i]}
                   </span>
-                ))}
+                  {i === 0 && (
+                    <span className="text-[9px] font-medium text-brand-mid">
+                      今日
+                    </span>
+                  )}
+                </div>
+
+                {/* 献立内容 */}
+                <div className="min-w-0 flex-1 divide-y divide-gray-50 py-1">
+                  {MEAL_KEYS.map((key, j) => {
+                    const meal = dayPlanItem[key];
+                    if (!meal) return null;
+                    return (
+                      <div
+                        key={key}
+                        className="flex items-baseline gap-1.5 px-3 py-1.5"
+                      >
+                        <span className="w-4 shrink-0 text-[10px] font-semibold text-gray-400">
+                          {MEAL_SHORT[j]}
+                        </span>
+                        <span className="text-xs font-semibold text-gray-700">
+                          {meal.main}
+                        </span>
+                        <span className="truncate text-[10px] text-gray-400">
+                          {meal.sides.join("・")}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 矢印 */}
+                <div className="flex items-center pr-3 text-gray-300">›</div>
               </div>
             </Card>
-          );
-        })}
-
-        {/* Add meal note */}
-        <div className="pt-2 text-center">
-          <button className="rounded-xl border border-dashed border-gray-200 px-4 py-2 text-xs text-gray-300">
-            + メモを追加する
-          </button>
+          ))}
         </div>
-      </div>
+      )}
 
-      {/* Allergen reminder */}
-      <div className="mx-4 mb-6 rounded-xl border border-red-100 bg-red-50 px-3 py-2.5">
+      {/* ─── アレルギー注意 ──────────────────────────────────────────────────── */}
+      <div className="mx-4 mb-6 mt-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2.5">
         <p className="mb-0.5 text-[11px] font-medium text-red-600">
           ⚠️ アレルギーに注意
         </p>

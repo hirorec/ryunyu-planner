@@ -1,5 +1,6 @@
 "use client";
-import type { MealRecord, MealReaction, MealType } from "@/lib/types";
+
+import type { MealReaction, MealRecord, MealType } from "@/lib/types";
 import { create } from "zustand";
 
 // 今日の日付（YYYY-MM-DD）

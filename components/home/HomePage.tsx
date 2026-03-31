@@ -15,6 +15,7 @@ import { useBabyStore } from "@/store/useBabyStore";
 import { useFoodStore } from "@/store/useFoodStore";
 import { useMealLogStore } from "@/store/useMealLogStore";
 import clsx from "clsx";
+import Link from "next/link";
 import { useState } from "react";
 
 const WEEK_PLAN = [
@@ -227,9 +228,12 @@ export function HomePage() {
                 </div>
               </div>
             ))}
-            <p className="pt-1 text-center text-xs font-medium text-brand-light">
+            <Link
+              href="/plan"
+              className="block pt-1 text-center text-xs font-medium text-brand-light active:opacity-70"
+            >
               献立タブで全日程を見る →
-            </p>
+            </Link>
           </Card>
         </section>
       </div>
