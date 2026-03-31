@@ -3,6 +3,7 @@
 import { PageHeader } from "@/components/layout/PageHeader";
 import { AIGenerateButton } from "@/components/plan/AIGenerateButton";
 import { DaySelector } from "@/components/plan/DaySelector";
+import { MealEditModal } from "@/components/plan/MealEditModal";
 import { Card } from "@/components/ui/Card";
 import { FOODS } from "@/lib/data/foods";
 import { getStageFromBirthDate } from "@/lib/utils/babyAge";
@@ -65,6 +66,10 @@ export function PlanPage() {
   const [plan, setPlan] = useState<DayPlan[]>(DEMO_PLAN);
   const [generated, setGenerated] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("day");
+  const [editTarget, setEditTarget] = useState<{
+    dayIdx: number;
+    mealKey: keyof Omit<DayPlan, "date">;
+  } | null>(null);
 
   const { statuses } = useFoodStore();
   const { profile } = useBabyStore();
@@ -82,6 +87,16 @@ export function PlanPage() {
     const shuffled = [...DEMO_PLAN].sort(() => Math.random() - 0.5);
     setPlan(shuffled);
     setGenerated(true);
+  };
+
+  const handleMealSave = (meal: Meal) => {
+    if (!editTarget) return;
+    setPlan((prev) =>
+      prev.map((d, i) =>
+        i === editTarget.dayIdx ? { ...d, [editTarget.mealKey]: meal } : d,
+      ),
+    );
+    setEditTarget(null);
   };
 
   const dayPlan = plan[selectedDay];
@@ -140,7 +155,12 @@ export function PlanPage() {
                     <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
                       {MEAL_LABELS[i]}
                     </p>
-                    <button className="text-[10px] font-medium text-brand-light">
+                    <button
+                      onClick={() =>
+                        setEditTarget({ dayIdx: selectedDay, mealKey: key })
+                      }
+                      className="text-[10px] font-medium text-brand-light"
+                    >
                       編集
                     </button>
                   </div>
@@ -245,6 +265,23 @@ export function PlanPage() {
           初めての食材は少量から。卵・乳・小麦・そば・落花生・えびは特に注意してください。
         </p>
       </div>
+
+      {/* ─── 食事編集モーダル ─────────────────────────────────────────────────── */}
+      {editTarget &&
+        (() => {
+          const meal = plan[editTarget.dayIdx][editTarget.mealKey];
+          if (!meal) return null;
+          return (
+            <MealEditModal
+              mealLabel={
+                MEAL_LABELS[MEAL_KEYS.indexOf(editTarget.mealKey)]
+              }
+              meal={meal}
+              onSave={handleMealSave}
+              onClose={() => setEditTarget(null)}
+            />
+          );
+        })()}
     </div>
   );
 }
