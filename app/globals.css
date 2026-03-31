@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    height: 100%;
+    background-color: #ECEFF1;
+  }
+
+  /* スクロールバーを非表示（モバイルライク） */
+  ::-webkit-scrollbar { width: 0; height: 0; }
+
+  /* タップハイライトを抑制 */
+  * { -webkit-tap-highlight-color: transparent; }
+}
+
+@layer utilities {
+  /* グラデーションヘッダー */
+  .gradient-header {
+    background: linear-gradient(160deg, #2e7d32, #66bb6a);
+  }
+
+  /* グラデーションカード */
+  .gradient-card {
+    background: linear-gradient(135deg, #388e3c, #66bb6a);
+  }
+
+  /* モバイルフレーム */
+  .mobile-frame {
+    @apply max-w-mobile mx-auto bg-brand-surface min-h-screen relative;
+    box-shadow: 0 0 40px rgba(0,0,0,0.15);
+  }
+}
