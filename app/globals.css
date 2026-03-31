@@ -3,16 +3,22 @@
 @tailwind utilities;
 
 @layer base {
-  html, body {
+  html,
+  body {
     height: 100%;
-    background-color: #ECEFF1;
+    background-color: #eceff1;
   }
 
   /* スクロールバーを非表示（モバイルライク） */
-  ::-webkit-scrollbar { width: 0; height: 0; }
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
 
   /* タップハイライトを抑制 */
-  * { -webkit-tap-highlight-color: transparent; }
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 @layer utilities {
@@ -28,7 +34,7 @@
 
   /* モバイルフレーム */
   .mobile-frame {
-    @apply max-w-mobile mx-auto bg-brand-surface min-h-screen relative;
-    box-shadow: 0 0 40px rgba(0,0,0,0.15);
+    @apply relative mx-auto min-h-screen max-w-mobile bg-brand-surface;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
   }
 }

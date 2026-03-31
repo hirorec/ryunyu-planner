@@ -1,17 +1,18 @@
-'use client'
-import { useFoodStore } from '@/store/useFoodStore'
-import { StatusBadge, AllergyBadge } from '@/components/ui/Badge'
-import { STATUS_CONFIG } from '@/lib/types'
-import type { FoodItem as FoodItemType } from '@/lib/types'
+"use client";
+
+import { AllergyBadge, StatusBadge } from "@/components/ui/Badge";
+import type { FoodItem as FoodItemType } from "@/lib/types";
+import { STATUS_CONFIG } from "@/lib/types";
+import { useFoodStore } from "@/store/useFoodStore";
 
 interface FoodItemProps {
-  food: FoodItemType
+  food: FoodItemType;
 }
 
 export function FoodItem({ food }: FoodItemProps) {
-  const { getStatus, cycleStatus } = useFoodStore()
-  const status = getStatus(food.id)
-  const cfg = STATUS_CONFIG[status]
+  const { getStatus, cycleStatus } = useFoodStore();
+  const status = getStatus(food.id);
+  const cfg = STATUS_CONFIG[status];
 
   return (
     <button
@@ -22,20 +23,22 @@ export function FoodItem({ food }: FoodItemProps) {
                   ${cfg.border}`}
     >
       {/* 左: ドット + 食材名 + アレルギー */}
-      <div className="flex items-center gap-3 min-w-0">
-        <div className={`w-2.5 h-2.5 rounded-full shrink-0 border-2 ${cfg.bg} ${cfg.border}`} />
+      <div className="flex min-w-0 items-center gap-3">
+        <div
+          className={`w-2.5 h-2.5 rounded-full shrink-0 border-2 ${cfg.bg} ${cfg.border}`}
+        />
         <div className="min-w-0">
-          <span className="text-sm font-semibold text-gray-800 mr-2">
+          <span className="mr-2 text-sm font-semibold text-gray-800">
             {food.name}
           </span>
-          {food.allergyRisk !== 'none' && food.allergyNote && (
+          {food.allergyRisk !== "none" && food.allergyNote && (
             <AllergyBadge note={food.allergyNote} />
           )}
         </div>
       </div>
 
       {/* 右: ステータスバッジ */}
-      <StatusBadge status={status} className="shrink-0 ml-2" />
+      <StatusBadge status={status} className="ml-2 shrink-0" />
     </button>
-  )
+  );
 }

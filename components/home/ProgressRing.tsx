@@ -1,8 +1,8 @@
 interface ProgressRingProps {
-  done: number
-  total: number
-  size?: number
-  strokeWidth?: number
+  done: number;
+  total: number;
+  size?: number;
+  strokeWidth?: number;
 }
 
 export function ProgressRing({
@@ -11,22 +11,30 @@ export function ProgressRing({
   size = 64,
   strokeWidth = 6,
 }: ProgressRingProps) {
-  const r = (size - strokeWidth * 2) / 2
-  const circ = 2 * Math.PI * r
-  const pct = total > 0 ? done / total : 0
-  const offset = circ * (1 - pct)
+  const r = (size - strokeWidth * 2) / 2;
+  const circ = 2 * Math.PI * r;
+  const pct = total > 0 ? done / total : 0;
+  const offset = circ * (1 - pct);
 
   return (
     <svg width={size} height={size} className="shrink-0">
       {/* 背景リング */}
       <circle
-        cx={size / 2} cy={size / 2} r={r}
-        fill="none" stroke="#E0E0E0" strokeWidth={strokeWidth}
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke="#E0E0E0"
+        strokeWidth={strokeWidth}
       />
       {/* 進捗リング */}
       <circle
-        cx={size / 2} cy={size / 2} r={r}
-        fill="none" stroke="#66BB6A" strokeWidth={strokeWidth}
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        fill="none"
+        stroke="#66BB6A"
+        strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeDasharray={circ}
         strokeDashoffset={offset}
@@ -35,21 +43,25 @@ export function ProgressRing({
       />
       {/* テキスト */}
       <text
-        x={size / 2} y={size / 2 - 4}
-        textAnchor="middle" dominantBaseline="middle"
-        className="text-xs font-bold fill-brand-dark"
+        x={size / 2}
+        y={size / 2 - 4}
+        textAnchor="middle"
+        dominantBaseline="middle"
+        className="fill-brand-dark text-xs font-bold"
         fontSize={12}
       >
         {done}
       </text>
       <text
-        x={size / 2} y={size / 2 + 8}
-        textAnchor="middle" dominantBaseline="middle"
+        x={size / 2}
+        y={size / 2 + 8}
+        textAnchor="middle"
+        dominantBaseline="middle"
         className="fill-gray-400"
         fontSize={9}
       >
         /{total}
       </text>
     </svg>
-  )
+  );
 }

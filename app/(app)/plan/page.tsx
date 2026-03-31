@@ -1,5 +1,5 @@
-import { PlanPage } from '@/components/plan/PlanPage'
+import { PlanPage } from "@/components/plan/PlanPage";
 
 export default function PlanPageRoute() {
-  return <PlanPage />
+  return <PlanPage />;
 }

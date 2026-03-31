@@ -1,4 +1,5 @@
 "use client";
+import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -23,20 +24,23 @@ export function BottomNav() {
             className="flex flex-1 select-none flex-col items-center justify-center gap-0.5 py-2 transition-colors duration-150"
           >
             <div
-              className={`p-1.5 rounded-lg transition-colors ${
-                active ? "bg-brand-bg" : ""
-              }`}
+              className={clsx(
+                "rounded-lg p-1.5 transition-colors",
+                active && "bg-brand-bg",
+              )}
             >
               <Icon
-                className={`w-5 h-5 transition-colors ${
-                  active ? "text-brand" : "text-gray-400"
-                }`}
+                className={clsx(
+                  "h-5 w-5 transition-colors",
+                  active ? "text-brand" : "text-gray-400",
+                )}
               />
             </div>
             <span
-              className={`text-[10px] font-medium transition-colors ${
-                active ? "text-brand font-bold" : "text-gray-400"
-              }`}
+              className={clsx(
+                "text-[10px] font-medium transition-colors",
+                active ? "font-bold text-brand" : "text-gray-400",
+              )}
             >
               {label}
             </span>

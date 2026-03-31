@@ -1,4 +1,6 @@
-/** クラス名を結合するユーティリティ（clsx 不要の軽量版） */
-export function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(' ')
+import clsx from "clsx";
+
+/** クラス名を結合するユーティリティ */
+export function cn(...classes: Parameters<typeof clsx>): string {
+  return clsx(...classes);
 }
