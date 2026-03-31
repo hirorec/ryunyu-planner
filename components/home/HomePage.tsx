@@ -1,10 +1,11 @@
 "use client";
+import { MealLogModal } from "@/components/home/MealLogModal";
 import { ProgressRing } from "@/components/home/ProgressRing";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StageBadge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { FOODS } from "@/lib/data/foods";
-import { STAGE_LABELS } from "@/lib/types";
+import { STAGE_LABELS, type MealReaction, type MealType } from "@/lib/types";
 import {
   calcAgeMonths,
   formatAgeMonths,
@@ -12,7 +13,9 @@ import {
 } from "@/lib/utils/babyAge";
 import { useBabyStore } from "@/store/useBabyStore";
 import { useFoodStore } from "@/store/useFoodStore";
+import { useMealLogStore } from "@/store/useMealLogStore";
 import clsx from "clsx";
+import { useState } from "react";
 
 const WEEK_PLAN = [
   {
@@ -35,32 +38,24 @@ const WEEK_PLAN = [
   },
 ];
 
-const FOOD_LOGS = [
-  {
-    time: "8:30",
-    meal: "朝ごはん",
-    items: ["7倍粥", "にんじんペースト", "豆腐"],
-    ok: true,
-    note: "よく食べた！",
-  },
-  {
-    time: "12:00",
-    meal: "昼ごはん",
-    items: ["うどん", "ほうれん草", "しらす"],
-    ok: false,
-    note: "うどんを少し残した",
-  },
-];
+const MEAL_ORDER: MealType[] = ["breakfast", "lunch", "dinner"];
+const MEAL_LABELS: Record<MealType, string> = {
+  breakfast: "朝ごはん",
+  lunch: "昼ごはん",
+  dinner: "夜ごはん",
+};
 
 export function HomePage() {
   const { statuses } = useFoodStore();
   const { profile } = useBabyStore();
+  const { addLog, getLogsForDate } = useMealLogStore();
+
+  const [modalMealType, setModalMealType] = useState<MealType | null>(null);
 
   const stage = getStageFromBirthDate(profile.birthDate);
   const ageMonths = calcAgeMonths(profile.birthDate);
   const stageLabel = STAGE_LABELS[stage];
 
-  // 中期対応食材だけを対象にカウント
   const midFoods = FOODS.filter((f) =>
     ["early", "mid"].includes(f.availableFrom),
   );
@@ -68,6 +63,18 @@ export function HomePage() {
   const nextUntried = midFoods.find(
     (f) => !statuses[f.id] || statuses[f.id] === "untried",
   );
+
+  const today = new Date().toISOString().slice(0, 10);
+  const todayLogs = getLogsForDate(today);
+  const handleSave = (
+    items: string[],
+    reaction: MealReaction,
+    note: string,
+  ) => {
+    if (!modalMealType) return;
+    addLog(modalMealType, items, reaction, note);
+    setModalMealType(null);
+  };
 
   return (
     <div>
@@ -119,42 +126,63 @@ export function HomePage() {
         <section>
           <h2 className="mb-2 text-sm font-bold text-gray-700">今日の食事</h2>
           <div className="space-y-2">
-            {FOOD_LOGS.map((log, i) => (
-              <Card key={i} className="overflow-hidden">
-                <div className="flex items-start justify-between gap-3 px-4 py-3">
-                  <div className="min-w-0">
-                    <p className="mb-1 text-[10px] text-gray-400">
-                      {log.meal}（{log.time}）
-                    </p>
-                    <p className="truncate text-sm font-semibold text-gray-800">
-                      {log.items.join("・")}
-                    </p>
-                    <p className="mt-1 text-xs text-gray-500">💬 {log.note}</p>
-                  </div>
-                  <span
-                    className={clsx(
-                      "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
-                      log.ok
-                        ? "bg-status-ok text-status-ok-fg"
-                        : "bg-status-skip text-status-skip-fg",
-                    )}
-                  >
-                    {log.ok ? "よく食べた" : "様子見"}
-                  </span>
-                </div>
-              </Card>
-            ))}
+            {MEAL_ORDER.map((mealType) => {
+              const log = todayLogs.find((l) => l.mealType === mealType);
 
-            {/* 夜ごはん未記録 */}
-            <div className="flex items-center justify-between rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-4 py-3">
-              <div>
-                <p className="mb-0.5 text-xs text-gray-300">夜ごはん</p>
-                <p className="text-sm text-gray-300">まだ記録されていません</p>
-              </div>
-              <button className="gradient-card rounded-xl px-4 py-2 text-xs font-semibold text-white transition-transform active:scale-95">
-                + 記録する
-              </button>
-            </div>
+              if (log) {
+                return (
+                  <Card key={mealType} className="overflow-hidden">
+                    <div className="flex items-start justify-between gap-3 px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="mb-1 text-[10px] text-gray-400">
+                          {MEAL_LABELS[mealType]}（{log.time}）
+                        </p>
+                        <p className="truncate text-sm font-semibold text-gray-800">
+                          {log.items.join("・")}
+                        </p>
+                        {log.note && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            💬 {log.note}
+                          </p>
+                        )}
+                      </div>
+                      <span
+                        className={clsx(
+                          "shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold",
+                          log.reaction === "good"
+                            ? "bg-status-ok text-status-ok-fg"
+                            : "bg-status-skip text-status-skip-fg",
+                        )}
+                      >
+                        {log.reaction === "good" ? "よく食べた" : "様子見"}
+                      </span>
+                    </div>
+                  </Card>
+                );
+              }
+
+              return (
+                <div
+                  key={mealType}
+                  className="flex items-center justify-between rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 px-4 py-3"
+                >
+                  <div>
+                    <p className="mb-0.5 text-xs text-gray-300">
+                      {MEAL_LABELS[mealType]}
+                    </p>
+                    <p className="text-sm text-gray-300">
+                      まだ記録されていません
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setModalMealType(mealType)}
+                    className="gradient-card rounded-xl px-4 py-2 text-xs font-semibold text-white transition-transform active:scale-95"
+                  >
+                    + 記録する
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </section>
 
@@ -205,6 +233,15 @@ export function HomePage() {
           </Card>
         </section>
       </div>
+
+      {/* ─── 食事記録モーダル ──────────────────────────────────────────────────── */}
+      {modalMealType && (
+        <MealLogModal
+          mealType={modalMealType}
+          onSave={handleSave}
+          onClose={() => setModalMealType(null)}
+        />
+      )}
     </div>
   );
 }

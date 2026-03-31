@@ -113,6 +113,20 @@ export interface BabyProfile {
   allergyFoodIds: string[];
 }
 
+// ─── 食事記録 ─────────────────────────────────────────────────────────────────
+export type MealType = "breakfast" | "lunch" | "dinner";
+export type MealReaction = "good" | "so-so";
+
+export interface MealRecord {
+  id: string;
+  date: string;       // YYYY-MM-DD
+  mealType: MealType;
+  time: string;       // HH:MM
+  items: string[];
+  reaction: MealReaction;
+  note?: string;
+}
+
 // ─── ユーティリティ型 ─────────────────────────────────────────────────────────
 export interface FoodStatusMap {
   [foodId: string]: FoodStatus;
