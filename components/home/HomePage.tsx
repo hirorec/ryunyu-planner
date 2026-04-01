@@ -21,21 +21,38 @@ import { useState } from "react";
 const WEEK_PLAN = [
   {
     day: "月",
-    today: true,
     breakfast: { main: "お粥", sides: ["にんじんペースト", "豆腐"] },
     lunch: { main: "うどん", sides: ["ほうれん草", "白身魚"] },
   },
   {
     day: "火",
-    today: false,
     breakfast: { main: "7倍粥", sides: ["かぼちゃ", "鶏ささみ"] },
     lunch: { main: "お粥", sides: ["ブロッコリー", "豆腐"] },
   },
   {
     day: "水",
-    today: false,
     breakfast: { main: "お粥", sides: ["トマト", "しらす"] },
     lunch: { main: "うどん", sides: ["玉ねぎ", "鮭"] },
+  },
+  {
+    day: "木",
+    breakfast: { main: "7倍粥", sides: ["バナナ", "豆腐"] },
+    lunch: { main: "お粥", sides: ["にんじん", "鶏ささみ"] },
+  },
+  {
+    day: "金",
+    breakfast: { main: "7倍粥", sides: ["かぼちゃ", "しらす"] },
+    lunch: { main: "うどん", sides: ["ほうれん草", "豆腐"] },
+  },
+  {
+    day: "土",
+    breakfast: { main: "お粥", sides: ["りんご", "豆腐"] },
+    lunch: { main: "うどん", sides: ["ブロッコリー", "白身魚"] },
+  },
+  {
+    day: "日",
+    breakfast: { main: "7倍粥", sides: ["バナナ", "しらす"] },
+    lunch: { main: "お粥", sides: ["かぼちゃ", "豆腐"] },
   },
 ];
 
@@ -65,8 +82,12 @@ export function HomePage() {
     (f) => !statuses[f.id] || statuses[f.id] === "untried",
   );
 
-  const today = new Date().toISOString().slice(0, 10);
+  const todayDate = new Date();
+  const today = todayDate.toISOString().slice(0, 10);
   const todayLogs = getLogsForDate(today);
+
+  const WEEK_DAYS = ["日", "月", "火", "水", "木", "金", "土"] as const;
+  const todayLabel = `${todayDate.getMonth() + 1}月${todayDate.getDate()}日（${WEEK_DAYS[todayDate.getDay()]}）`;
   const handleSave = (
     items: string[],
     reaction: MealReaction,
@@ -125,7 +146,10 @@ export function HomePage() {
 
         {/* ─── 今日の食事 ──────────────────────────────────────────────────────── */}
         <section>
-          <h2 className="mb-2 text-sm font-bold text-gray-700">今日の食事</h2>
+          <h2 className="mb-2 flex items-baseline gap-2 text-sm font-bold text-gray-700">
+            今日の食事
+            <span className="text-xs font-normal text-gray-400">{todayLabel}</span>
+          </h2>
           <div className="space-y-2">
             {MEAL_ORDER.map((mealType) => {
               const log = todayLogs.find((l) => l.mealType === mealType);
@@ -202,7 +226,7 @@ export function HomePage() {
                   <div
                     className={clsx(
                       "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                      day.today
+                      day.day === WEEK_DAYS[todayDate.getDay()]
                         ? "bg-brand-light text-white"
                         : "bg-brand-bg text-brand-dark",
                     )}

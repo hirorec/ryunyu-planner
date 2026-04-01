@@ -62,7 +62,8 @@ const MEAL_SHORT = ["朝", "昼", "夜"] as const;
 type ViewMode = "day" | "week";
 
 export function PlanPage() {
-  const [selectedDay, setSelectedDay] = useState(0);
+  const todayIdx = (new Date().getDay() + 6) % 7;
+  const [selectedDay, setSelectedDay] = useState(todayIdx);
   const [plan, setPlan] = useState<DayPlan[]>(DEMO_PLAN);
   const [generated, setGenerated] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("day");
@@ -142,7 +143,7 @@ export function PlanPage() {
           <DaySelector
             selected={selectedDay}
             onSelect={setSelectedDay}
-            todayIdx={0}
+            todayIdx={todayIdx}
           />
 
           <div className="space-y-3 px-4 py-2">
