@@ -1,7 +1,7 @@
 "use client";
 import { saveBabyProfile } from "@/lib/services/db";
 import type { BabyProfile } from "@/lib/types";
-import { getDeviceId } from "@/lib/utils/deviceId";
+import { getBabyId } from "@/lib/utils/babyId";
 import { create } from "zustand";
 
 interface BabyStoreState {
@@ -17,7 +17,7 @@ export const useBabyStore = create<BabyStoreState>()((set) => ({
   },
   setProfile: (profile) => {
     set({ profile });
-    const deviceId = getDeviceId();
+    const deviceId = getBabyId();
     if (deviceId) saveBabyProfile(deviceId, profile).catch(console.error);
   },
 }));

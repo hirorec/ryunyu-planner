@@ -1,7 +1,7 @@
 "use client";
 import { deleteFoodStatuses, saveFoodStatus } from "@/lib/services/db";
 import type { FoodStatus, FoodStatusMap } from "@/lib/types";
-import { getDeviceId } from "@/lib/utils/deviceId";
+import { getBabyId } from "@/lib/utils/babyId";
 import { create } from "zustand";
 
 const INITIAL_STATUSES: FoodStatusMap = {
@@ -53,13 +53,13 @@ export const useFoodStore = create<FoodStoreState>()((set, get) => ({
     const idx = STATUS_CYCLE.indexOf(current);
     const next = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
     set((state) => ({ statuses: { ...state.statuses, [foodId]: next } }));
-    const deviceId = getDeviceId();
+    const deviceId = getBabyId();
     if (deviceId) saveFoodStatus(deviceId, foodId, next).catch(console.error);
   },
 
   setStatus: (foodId, status) => {
     set((state) => ({ statuses: { ...state.statuses, [foodId]: status } }));
-    const deviceId = getDeviceId();
+    const deviceId = getBabyId();
     if (deviceId) saveFoodStatus(deviceId, foodId, status).catch(console.error);
   },
 
@@ -72,7 +72,7 @@ export const useFoodStore = create<FoodStoreState>()((set, get) => ({
 
   resetStatuses: () => {
     set({ statuses: {} });
-    const deviceId = getDeviceId();
+    const deviceId = getBabyId();
     if (deviceId) deleteFoodStatuses(deviceId).catch(console.error);
   },
 }));

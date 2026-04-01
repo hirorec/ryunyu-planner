@@ -1,4 +1,5 @@
 "use client";
+import { InviteCard } from "@/components/settings/InviteCard";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { StageBadge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
@@ -184,6 +185,11 @@ export function SettingsPage() {
           <p className="mt-2.5 text-[10px] leading-relaxed text-gray-400">
             初めて試す際は少量から。反応があればすぐに摂取を中止し、医師に相談してください。
           </p>
+        </Card>
+
+        {/* ─── アカウント共有 ──────────────────────────────────────────────── */}
+        <Card className="p-4">
+          <InviteCard />
         </Card>
 
         {/* ─── データリセット ──────────────────────────────────────────────── */}

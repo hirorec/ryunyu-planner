@@ -2,7 +2,7 @@
 
 import { saveMealLog } from "@/lib/services/db";
 import type { MealReaction, MealRecord, MealType } from "@/lib/types";
-import { getDeviceId } from "@/lib/utils/deviceId";
+import { getBabyId } from "@/lib/utils/babyId";
 import { create } from "zustand";
 
 interface MealLogState {
@@ -36,7 +36,7 @@ export const useMealLogStore = create<MealLogState>()((set, get) => ({
       note: note || undefined,
     };
     set((state) => ({ logs: [...state.logs, record] }));
-    const deviceId = getDeviceId();
+    const deviceId = getBabyId();
     if (deviceId) saveMealLog(deviceId, record).catch(console.error);
   },
 
