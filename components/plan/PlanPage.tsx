@@ -6,6 +6,7 @@ import { DaySelector } from "@/components/plan/DaySelector";
 import { MealEditModal } from "@/components/plan/MealEditModal";
 import { Card } from "@/components/ui/Card";
 import { FOODS } from "@/lib/data/foods";
+import { STAGE_LABELS } from "@/lib/types";
 import { getStageFromBirthDate } from "@/lib/utils/babyAge";
 import { useBabyStore } from "@/store/useBabyStore";
 import { useFoodStore } from "@/store/useFoodStore";
@@ -83,11 +84,34 @@ export function PlanPage() {
   );
 
   const handleGenerate = async () => {
-    // TODO 本番移行時: Claude API (claude-3-5-haiku-latest) を呼び出す
-    await new Promise((r) => setTimeout(r, 2000));
-    const shuffled = [...DEMO_PLAN].sort(() => Math.random() - 0.5);
-    setPlan(shuffled);
-    setGenerated(true);
+    const okFoods = FOODS.filter((f) => statuses[f.id] === "ok");
+    const untriedFoods = FOODS.filter(
+      (f) =>
+        ["early", "mid"].includes(f.availableFrom) &&
+        (!statuses[f.id] || statuses[f.id] === "untried"),
+    );
+    const ngFoods = FOODS.filter(
+      (f) =>
+        statuses[f.id] === "ng" || profile.allergyFoodIds.includes(f.id),
+    );
+
+    const res = await fetch("/api/generate-plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        babyName: profile.name,
+        stageLabel: STAGE_LABELS[stage],
+        okFoodNames: okFoods.map((f) => f.name),
+        untriedFoodNames: untriedFoods.map((f) => f.name),
+        ngFoodNames: ngFoods.map((f) => f.name),
+      }),
+    });
+
+    const data = await res.json();
+    if (data.plan) {
+      setPlan(data.plan);
+      setGenerated(true);
+    }
   };
 
   const handleMealSave = (meal: Meal) => {

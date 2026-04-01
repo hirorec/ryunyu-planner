@@ -9,13 +9,24 @@ import {
   formatAgeMonths,
   getStageFromBirthDate,
 } from "@/lib/utils/babyAge";
+import { supabase } from "@/lib/supabase";
+import { setDeviceId } from "@/lib/utils/deviceId";
 import { useBabyStore } from "@/store/useBabyStore";
 import { useFoodStore } from "@/store/useFoodStore";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function SettingsPage() {
   const { profile, setProfile } = useBabyStore();
   const { statuses, resetStatuses } = useFoodStore();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    // 新しい匿名IDを発行してリセット
+    setDeviceId(crypto.randomUUID());
+    router.push("/login");
+  };
 
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(profile.name);
@@ -195,6 +206,14 @@ export function SettingsPage() {
             食材記録をリセット
           </button>
         </Card>
+
+        {/* ─── ログアウト ──────────────────────────────────────────────────── */}
+        <button
+          onClick={handleSignOut}
+          className="w-full rounded-xl border border-gray-200 py-3 text-sm font-semibold text-gray-400 transition-colors hover:bg-gray-50"
+        >
+          ログアウト
+        </button>
 
         {/* ─── アプリ情報 ──────────────────────────────────────────────────── */}
         <div className="space-y-1 py-2 text-center">
