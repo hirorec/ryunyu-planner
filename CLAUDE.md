@@ -5,6 +5,7 @@
 **りゅにゅうプランナー**：AI搭載の離乳食管理Webアプリ。赤ちゃんの月齢に応じた食材管理・献立生成を行う個人開発SaaS。
 
 - ターゲット：0〜1歳児の保護者（コンシューマー向け）
+- 本番URL：https://ryunyu-planner.vercel.app
 - マネタイズ：無料 + ¥480/月 Premiumプラン（Phase 2）
 - 競合：ぴよログ（食材管理機能なし）、和光堂サイト（静的情報のみ）
 
@@ -19,8 +20,10 @@
 | 状態管理 | Zustand v5 |
 | 言語 | TypeScript (strict) |
 | スタイル方針 | モバイルファースト (max-w: 390px) |
-| 本番DB（予定） | Supabase |
-| AI（予定） | Claude API (claude-3-5-haiku-latest) |
+| DB | Supabase (PostgreSQL) |
+| 認証 | Supabase Auth (Google OAuth) |
+| AI | Anthropic API (claude-haiku-4-5-20251001) |
+| デプロイ | Vercel |
 
 ---
 
@@ -29,60 +32,95 @@
 ```
 ryunyu-planner/
 ├── app/
-│   ├── (app)/                  # BottomNav付きレイアウトグループ
-│   │   ├── layout.tsx          # AppLayout: <main> + <BottomNav>
+│   ├── (app)/                  # BottomNav付きレイアウトグループ（要認証）
+│   │   ├── layout.tsx          # AppLayout: <main> + <BottomNav> + StoreHydration
 │   │   ├── home/page.tsx
 │   │   ├── foods/page.tsx
 │   │   ├── plan/page.tsx
+│   │   ├── logs/page.tsx       # 食事履歴
 │   │   └── settings/page.tsx
-│   ├── layout.tsx              # rootレイアウト（日本語フォント）
+│   ├── auth/callback/route.ts  # Google OAuthコールバック
+│   ├── login/page.tsx          # ログイン画面
+│   ├── api/
+│   │   └── generate-plan/route.ts  # Claude API 献立生成
+│   ├── manifest.ts             # PWA manifest
+│   ├── layout.tsx              # rootレイアウト
 │   └── page.tsx                # → redirect('/home')
 ├── components/
+│   ├── auth/
+│   │   └── LoginPage.tsx       # Googleログインボタン
 │   ├── layout/
-│   │   ├── BottomNav.tsx       # 'use client' / usePathname でアクティブ制御
-│   │   └── PageHeader.tsx      # グラデーションヘッダー（title/subtitle/children）
+│   │   ├── BottomNav.tsx       # 5タブ（ホーム/食材/献立/記録/設定）
+│   │   ├── PageHeader.tsx      # グラデーションヘッダー
+│   │   └── StoreHydration.tsx  # Supabaseからデータロード・baby_id解決
 │   ├── ui/
-│   │   ├── Card.tsx            # 白い角丸カード（onClick任意）
+│   │   ├── Card.tsx
 │   │   └── Badge.tsx           # StatusBadge / StageBadge / AllergyBadge
 │   ├── home/
 │   │   ├── HomePage.tsx        # 進捗リング・食事ログ・週間プレビュー
-│   │   └── ProgressRing.tsx    # SVG進捗リング
+│   │   └── ProgressRing.tsx
 │   ├── foods/
-│   │   ├── FoodsPage.tsx       # カテゴリタブ・ステータスフィルター・リスト
-│   │   ├── FoodItem.tsx        # 'use client' / タップでcycleStatus
-│   │   └── CategoryTabs.tsx    # 'use client' / 横スクロールタブ
+│   │   ├── FoodsPage.tsx
+│   │   ├── FoodItem.tsx        # タップでcycleStatus
+│   │   └── CategoryTabs.tsx
 │   ├── plan/
 │   │   ├── PlanPage.tsx        # 曜日セレクター・AI生成・献立詳細
-│   │   ├── AIGenerateButton.tsx # 'use client' / ローディング演出
-│   │   └── DaySelector.tsx     # 'use client' / 7日間セレクター
+│   │   ├── AIGenerateButton.tsx
+│   │   ├── DaySelector.tsx
+│   │   └── MealEditModal.tsx   # 献立の食材編集モーダル
+│   ├── logs/
+│   │   └── LogsPage.tsx        # 食事履歴（日付別グルーピング）
 │   └── settings/
-│       └── SettingsPage.tsx    # プロフィール編集・統計・リセット
+│       ├── SettingsPage.tsx    # プロフィール編集・統計・共有・ログアウト
+│       └── InviteCard.tsx      # 招待コード発行・QR表示・コード入力
 ├── lib/
-│   ├── types.ts                # FoodStage / FoodCategory / FoodStatus / interfaces
+│   ├── types.ts
+│   ├── supabase.ts             # Supabaseブラウザクライアント（createBrowserClient）
+│   ├── supabase-server.ts      # Supabaseサーバークライアント
 │   ├── data/
-│   │   └── foods.ts            # 食材マスタ（~35件）TS配列 + getFoodsByCategory()
+│   │   └── foods.ts            # 食材マスタ（~35件）
 │   ├── services/
-│   │   └── foods.service.ts    # 非同期サービス層（本番移行ポイント）
+│   │   └── db.ts               # Supabase全DB操作（babies/food_statuses/meal_logs）
 │   └── utils/
-│       ├── babyAge.ts          # calcAgeMonths / getStageFromBirthDate / formatAgeMonths
-│       └── cn.ts               # className utility
-└── store/
-    ├── useFoodStore.ts         # 食材ステータス管理（cycleStatus / resetStatuses）
-    └── useBabyStore.ts         # 赤ちゃんプロフィール（setProfile）
+│       ├── babyAge.ts
+│       ├── babyId.ts           # getBabyId / setBabyId / generateInviteCode
+│       ├── deviceId.ts         # getDeviceId / setDeviceId（user_id管理）
+│       └── cn.ts
+├── store/
+│   ├── useFoodStore.ts         # 食材ステータス（Supabase同期）
+│   ├── useBabyStore.ts         # 赤ちゃんプロフィール（Supabase同期）
+│   └── useMealLogStore.ts      # 食事ログ（Supabase同期）
+├── middleware.ts               # 未認証 → /login リダイレクト
+└── public/
+    └── icon.svg                # PWAアイコン
 ```
 
 ---
 
 ## 重要な設計決定
 
-### プロトタイプ→本番の移行ポイント
+### データ識別子の構造
 
-| 現在（プロトタイプ） | 本番移行時 |
-|---------------------|-----------|
-| `lib/data/foods.ts`（TS配列） | Supabase テーブルに移行 |
-| `lib/services/foods.service.ts`（モック） | Supabase クライアント呼び出しに差し替え |
-| Zustand（メモリ上） | `persist` ミドルウェア + localStorage → サーバー同期 |
-| AI生成（setTimeout デモ） | Claude API (claude-3-5-haiku-latest) 呼び出し |
+```
+user_id（= Supabase Auth の user.id、または匿名UUID）
+  └─ baby_members テーブルで baby_id に紐付く
+      └─ babies / food_statuses / meal_logs は baby_id で管理
+```
+
+- 複数の user_id が同じ baby_id を共有できる（アカウント共有機能）
+- `getBabyId()` → localStorage の `ryunyu-baby-id`
+- `getDeviceId()` → localStorage の `ryunyu-device-id`（= user_id）
+- StoreHydration で baby_id を解決してからデータをロード
+
+### Supabaseテーブル構成
+
+| テーブル | 主キー | 説明 |
+|---------|--------|------|
+| `babies` | `id (uuid)` | 赤ちゃん情報＋招待コード |
+| `baby_members` | `(baby_id, user_id)` | 誰がどの赤ちゃんのデータにアクセスできるか |
+| `food_statuses` | `(device_id, food_id)` | 食材ステータス（baby_idも持つ） |
+| `meal_logs` | `(id, device_id)` | 食事記録（baby_idも持つ） |
+| `baby_profiles` | `device_id` | 旧プロフィールテーブル（後方互換） |
 
 ### ブランドカラー（tailwind.config.ts）
 
@@ -113,28 +151,22 @@ status: {
 
 ---
 
-## デモデータ
-
-- 赤ちゃん名: `ゆい`、誕生日: `2025-08-01`（= 約7ヶ月 → 中期ステージ）
-- `useFoodStore` の `INITIAL_STATUSES` に23食材を `ok` としてセット済み
-
----
-
 ## 現在の実装状況
 
 ### 完了済み ✅
-- プロジェクト設定（Next.js 15 / Tailwind / TypeScript / Zustand）
-- 型定義・食材マスタデータ・サービス層・ストア
-- 共通UIコンポーネント（BottomNav / PageHeader / Card / Badge）
-- 全4画面（ホーム / 食材チェック / 献立 / 設定）
+- 全画面実装（ホーム / 食材チェック / 献立 / 食事履歴 / 設定）
+- Supabase DB永続化（food_statuses / meal_logs / babies）
+- Google OAuth認証（Supabase Auth）
+- Claude API 献立生成（claude-haiku-4-5-20251001）
+- 招待コード＋QRコードによるアカウント共有
+- PWA対応（Service Worker / manifest）
+- Vercelデプロイ・本番稼働中
 
 ### 未実装・TODO 🚧
-- 献立の「食材変更」モーダル（PlanPage.tsx の編集ボタン）
-- メモ追加機能
-- データの永続化（Zustand persist / Supabase）
-- Claude API による実際の献立生成
-- 認証（Supabase Auth）
 - Premiumプラン・決済（Stripe）
+- メモ追加機能
+- 食材マスタのSupabase移行（現在はTSファイル）
+- RLSポリシーの設定（現在は全テーブルRLS無効）
 
 ---
 
@@ -143,7 +175,15 @@ status: {
 ```bash
 npm install
 npm run dev
-# → http://localhost:3000
+# → http://localhost:4000
+```
+
+### 必要な環境変数（.env.local）
+
+```env
+ANTHROPIC_API_KEY=sk-ant-...
+NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
 ```
 
 ---
